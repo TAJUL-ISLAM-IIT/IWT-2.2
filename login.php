@@ -1,123 +1,114 @@
-<?php
-ob_start();
-session_start();
-require_once('db.php');
-require_once('functions.php');
-$error_message = '';
-$success_message = '';
-?>
+<?php require_once('header.php'); ?>
 
 <?php
 if (isset($_POST['form_login'])) {
-	if ($_POST['user_email'] == '' || $_POST['user_password'] == '') {
-		$error_message = 'Please give the correct email and password';
-	} else {
-		$q = $pdo->prepare("
-					SELECT * 
-					FROM user 
-					WHERE user_email=?
-				");
-		$q->execute([$_POST['user_email']]);
-		$res = $q->fetchAll();
-		$total = $q->rowCount();
 
-		if ($total) {
-			foreach ($res as $row) {
-				$stored_password = $row['user_password'];
-			}
+  if ($_POST['cust_email'] == '' || $_POST['cust_password'] == '') {
+    $error_message = 'Please give the correct email and password';
+  } else {
+    $q = $pdo->prepare("
+          SELECT * 
+          FROM customer 
+          WHERE cust_email=?
+        ");
+    $q->execute([$_POST['cust_email']]);
+    $res = $q->fetchAll();
+    $total = $q->rowCount();
 
-			if (md5($_POST['user_password']) == $stored_password) {
-				// Everything is fine!
-				$_SESSION['user'] = $row;
+    if ($total) {
+      foreach ($res as $row) {
+        $stored_password = $row['cust_password'];
+      }
 
-				header('location: index.php');
-				exit;
-			} else {
-				$error_message = 'Please give the correct email and password';
-			}
-		} else {
-			$error_message = 'Please give the correct email and password';
-		}
-	}
+      if (md5($_POST['cust_password']) == $stored_password) {
+        // Everything is fine!
+        $_SESSION['customer'] = $row;
+
+        header('location: c-dashboard.php');
+        exit;
+      } else {
+        $error_message = 'Please give the correct email and password';
+      }
+    } else {
+      $error_message = 'Please give the correct email and password';
+    }
+  }
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
+<!-- Parallax Effect -->
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#parallax-pagetitle').parallax("50%", -0.55);
+});
+</script>
 
-<head>
-
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>Admin Log In</title>
-
-    <!-- Bootstrap Core CSS -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- MetisMenu CSS -->
-    <link href="assets/css/metisMenu.min.css" rel="stylesheet">
-
-    <!-- Custom CSS -->
-    <link href="assets/css/sb-admin-2.css" rel="stylesheet">
-
-    <!-- Custom Fonts -->
-    <link href="assets/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-
-</head>
-
-<body>
-
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 col-md-offset-4">
-                <div class="login-panel panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Please Sign In</h3>
-                    </div>
-                    <div class="panel-body">
-
-                        <?php
-						if ($error_message) {
-							echo '<div class="alert alert-danger">' . $error_message . '</div>';
-						}
-						?>
-
-                        <form role="form" action="" method="post">
-                            <fieldset>
-                                <div class="form-group">
-                                    <input class="form-control" placeholder="Email Address" name="user_email"
-                                        type="email" autofocus>
-                                </div>
-                                <div class="form-group">
-                                    <input class="form-control" placeholder="Password" name="user_password"
-                                        type="password">
-                                </div>
-                                <input type="submit" class="btn btn-lg btn-success btn-block" value="Login"
-                                    name="form_login">
-                            </fieldset>
-                        </form>
+<section class="parallax-effect">
+    <div id="parallax-pagetitle" style="background-image: url(images/parallax/parallax-01.jpg);">
+        <div class="color-overlay">
+            <!-- Page title -->
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <ol class="breadcrumb">
+                            <li><a href="index.php">Home</a></li>
+                            <li class="active">Login</li>
+                        </ol>
+                        <h1>Login</h1>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</section>
+<div class="container">
+    <div class="row">
 
-    <!-- jQuery -->
-    <script src="assets/js/jquery.min.js"></script>
 
-    <!-- Bootstrap Core JavaScript -->
-    <script src="assets/js/bootstrap.min.js"></script>
+        <!-- Contact form -->
+        <section id="contact-form" class="mt50">
+            <div class="col-md-7">
 
-    <!-- Metis Menu Plugin JavaScript -->
-    <script src="assets/js/metisMenu.min.js"></script>
+                <?php
+        if ($error_message) {
+        ?><script>
+                alert('<?php echo $error_message; ?>');
+                </script><?php
+                  }
 
-    <!-- Custom Theme JavaScript -->
-    <script src="assets/js/sb-admin-2.js"></script>
+                  if ($success_message) {
+                    ?><script>
+                alert('<?php echo $success_message; ?>');
+                </script><?php
+                  }
+                    ?>
 
-</body>
+                <form class="clearfix mt50" method="post" action="">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name"><span class="required">*</span> Email Address</label>
+                                <input name="cust_email" type="text" class="form-control" value="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="name"><span class="required">*</span> Password</label>
+                                <input name="cust_password" type="password" class="form-control" value="">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn  btn-lg btn-primary" name="form_login">Login</button>
+                    <!-- <a href="forget.php">Forget Password?</a> -->
+                </form>
 
-</html>
+
+            </div>
+        </section>
+    </div>
+</div>
+
+
+<?php require_once('footer.php'); ?>
