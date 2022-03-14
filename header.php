@@ -1,352 +1,153 @@
 <?php
 ob_start();
 session_start();
-require_once('db.php');
-require_once('functions.php');
+require_once('admin/db.php');
+require_once('admin/functions.php');
 $error_message = '';
 $success_message = '';
-
-if (!isset($_SESSION['user'])) {
-    header('location: login.php');
-    exit;
-}
-
-
-
-
-if ($_SESSION['user']['role_id'] != 1 && $_SESSION['user']['role_id'] != 2) :
-
-    $q = $pdo->prepare("
-			SELECT * 
-			FROM role_access t1
-			JOIN pages t2
-			ON t1.page_id = t2.page_id
-			WHERE t1.role_id=?
-		");
-    $q->execute([
-        $_SESSION['user']['role_id']
-    ]);
-    $res = $q->fetchAll();
-
-    $page_names = array();
-    foreach ($res as $row) {
-        if ($row['access_status'] == 1) {
-            $page_names[] = $row['page_name'];
-        }
-    }
-
-    $cur_page = substr($_SERVER["SCRIPT_NAME"], strrpos($_SERVER["SCRIPT_NAME"], "/") + 1);
-
-    if ($cur_page == 'feature_view.php' || $cur_page == 'feature_edit.php') {
-        if (in_array('feature_view.php', $page_names) || in_array('feature_edit.php', $page_names)) {
-        } else {
-            header('location: logout.php');
-            exit;
-        }
-    }
-// if(!in_array($cur_page, $page_names))
-// {
-// 	header('location: logout.php');
-// 	exit;
-// }
-
-endif;
-
-
 ?>
-<!DOCTYPE html>
-<html lang="en">
+<?php
+$q = $pdo->prepare("SELECT * FROM settings WHERE id=?");
+$q->execute([1]);
+$res = $q->fetchAll();
+foreach ($res as $row) {
+    $top_bar_email = $row['top_bar_email'];
+    $top_bar_phone = $row['top_bar_phone'];
+    $top_bar_show = $row['top_bar_show'];
+}
+?>
+<!DOCTYPE HTML>
+<html>
 
 <head>
-
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <title>SAJEK VALLEY HOTEL BOOKING SYSTEM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="shortcut icon" href="favicon.ico">
 
-    <title>Admin Panel</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/animate.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/owl.carousel.css">
+    <link rel="stylesheet" href="css/owl.theme.css">
+    <link rel="stylesheet" href="css/prettyPhoto.css">
+    <link rel="stylesheet" href="css/smoothness/jquery-ui-1.10.4.custom.min.css">
+    <link rel="stylesheet" href="rs-plugin/css/settings.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/colors/turquoise.css" id="switch_style">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400italic,600italic,400,600,700">
 
-    <!-- Bootstrap Core CSS -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Javascripts -->
+    <script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap-hover-dropdown.min.js"></script>
+    <script src="https://js.stripe.com/v2/"></script>
+    <script type="text/javascript" src="js/owl.carousel.min.js"></script>
+    <script type="text/javascript" src="js/jquery.parallax-1.1.3.js"></script>
+    <script type="text/javascript" src="js/jquery.nicescroll.js"></script>
+    <script type="text/javascript" src="js/jquery.prettyPhoto.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js"></script>
+    <script type="text/javascript" src="js/jquery.forms.js"></script>
+    <script type="text/javascript" src="js/jquery.sticky.js"></script>
+    <script type="text/javascript" src="js/waypoints.min.js"></script>
+    <script type="text/javascript" src="js/jquery.isotope.min.js"></script>
+    <script type="text/javascript" src="js/jquery.gmap.min.js"></script>
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+    <script type="text/javascript" src="rs-plugin/js/jquery.themepunch.tools.min.js"></script>
+    <script type="text/javascript" src="rs-plugin/js/jquery.themepunch.revolution.min.js"></script>
+    <script type="text/javascript" src="js/switch.js"></script>
+    <script type="text/javascript" src="js/custom.js"></script>
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+    <script>
+    (function(i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function() {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '../../www.google-analytics.com/analytics.js', 'ga');
 
-    <!-- MetisMenu CSS -->
-    <link href="assets/css/metisMenu.min.css" rel="stylesheet">
-
-    <!-- DataTables CSS -->
-    <link href="assets/css/dataTables.bootstrap.css" rel="stylesheet">
-
-    <!-- DataTables Responsive CSS -->
-    <link href="assets/css/dataTables.responsive.css" rel="stylesheet">
-
-    <!-- Custom CSS -->
-    <link href="assets/css/sb-admin-2.css" rel="stylesheet">
-
-    <!-- Custom Fonts -->
-    <link href="assets/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
-
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-
-    <script src="https://cdn.ckeditor.com/4.14.0/standard/ckeditor.js"></script>
-
+    ga('create', 'UA-50960990-1', 'slashdown.nl');
+    ga('send', 'pageview');
+    </script>
 </head>
 
 <body>
 
-    <div id="wrapper">
 
-        <!-- Navigation -->
-        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="index.php">Admin Panel</a>
+
+    <?php if ($top_bar_show == 'Yes') : ?>
+    <div id="top-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-6">
+                    <div class="th-text pull-left">
+                        <div class="th-item"> <a href="#"><i class="fa fa-phone"></i> <?php echo $top_bar_phone; ?></a>
+                        </div>
+                        <div class="th-item"> <a href="#"><i class="fa fa-envelope"></i> <?php echo $top_bar_email; ?>
+                            </a></div>
+                    </div>
+                </div>
+
             </div>
-            <!-- /.navbar-header -->
+        </div>
+    </div>
+    <?php endif; ?>
 
-            <ul class="nav navbar-top-links navbar-right">
-                <li>
-                    Logged in as <?php echo $_SESSION['user']['user_full_name']; ?>
-                </li>
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+
+
+    <!-- Header -->
+    <header>
+        <!-- Navigation -->
+        <div class="navbar yamm navbar-default" id="sticky">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" data-toggle="collapse" data-target="#navbar-collapse-grid"
+                        class="navbar-toggle"> <span class="icon-bar"></span> <span class="icon-bar"></span> <span
+                            class="icon-bar"></span> </button>
+                    <a href="index.php" class="navbar-brand">
+                        <!-- Logo -->
+                        <div id="logo"> <img id="default-logo" src="images/logo.png" alt="Sajek" style="height:44px;">
+                            <img id="retina-logo" src="images/logo-retina.png" alt="Sajek" style="height:44px;"> </div>
                     </a>
-                    <ul class="dropdown-menu dropdown-user">
-                        <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
-                        </li>
-                        <li><a href="logout.php"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
-                        </li>
-                    </ul>
-                    <!-- /.dropdown-user -->
-                </li>
-                <!-- /.dropdown -->
+                </div>
+                <div id="navbar-collapse-grid" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li> <a href="index.php">Home</a></li>
+                        <!-- <li class="dropdown"> <a href="#" data-toggle="dropdown" class="dropdown-toggle js-activated">Rooms<b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="room-list.php">Room List View</a></li>
+              <li><a href="room-detail.php">Room Detail</a></li>
             </ul>
-            <!-- /.navbar-top-links -->
+          </li> -->
+                        <li><a href="rooms.php">Rooms</a></li>
 
-            <div class="navbar-default sidebar" role="navigation">
-                <div class="sidebar-nav navbar-collapse">
-                    <ul class="nav" id="side-menu">
+                        <li><a href="gallery.php">Gallery</a></li>
+                        <!-- <li><a href="contact.php">Contact us</a></li> -->
 
-
-                        <?php if ($_SESSION['user']['role_id'] == 1 || $_SESSION['user']['role_id'] == 2) : ?>
-                        <li><a href="index.php"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
-                        <li><a href="website_settings.php"><i class="fa fa-dashboard fa-fw"></i> Website Settings</a>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Customer Details<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="customer_add.php">Add Customer</a></li>
-                                <li><a href="customer_view.php">View Customer</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Payment Details<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="payment_view.php">Payment view</a></li>
-                                <li><a href="booking.php">CheckIn Details</a></li>
-                                <li><a href="booking1.php">CheckOut Details</a></li>
-                            </ul>
-                        </li>
-
-                        <!-- <li><a href="email_template.php"><i class="fa fa-dashboard fa-fw"></i> Email Template (Post)</a></li> -->
-
-                        <!-- <li>
-						<a href="#"><i class="fa fa-files-o fa-fw"></i> Language<span class="fa arrow"></span></a>
-						<ul class="nav nav-second-level">
-							<li><a href="language_add.php">Add Language</a></li>
-
-							<li><a href="language_view.php">View Languages</a></li>
-						</ul>
-					</li> -->
-
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Sliders<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="slider_add.php">Add Slider</a></li>
-
-                                <li><a href="slider_view.php">View Sliders</a></li>
-                            </ul>
-                        </li>
-                        <!-- <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Features<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="feature_add.php">Add Feature</a></li>
-                                <li><a href="feature_view.php">View Features</a></li>
-                            </ul>
-                        </li> -->
-                        <!-- <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Testimonials<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="testimonial_add.php">Add Testimonial</a></li>
-                                <li><a href="testimonial_view.php">View Testimonials</a></li>
-                            </ul>
-                        </li> -->
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Service<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="service_add.php">Add Service</a></li>
-                                <li><a href="service_view.php">View Services</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Gallery<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="photo_category_add.php">Add Photo Category</a></li>
-                                <li><a href="photo_category_view.php">View Photo Categories</a></li>
-                                <li><a href="photo_add.php">Add Photo</a></li>
-                                <li><a href="photo_view.php">View Photos</a></li>
-                            </ul>
-                        </li>
-                        <!-- <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Blog / Post<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="category_add.php">Add Category</a></li>
-                                <li><a href="category_view.php">View Categories</a></li>
-                                <li><a href="post_add.php">Add Post</a></li>
-                                <li><a href="post_view.php">View Posts</a></li>
-                                <li><a href="all_comments.php">Comments</a></li>
-                                <li><a href="all_replies.php">Replies</a></li>
-                            </ul>
-                        </li> -->
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Hotel Room<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="room_type_add.php">Add Room Type</a></li>
-                                <li><a href="room_type_view.php">View Room Types</a></li>
-                                <li><a href="room_feature_add.php">Add Room Feature</a></li>
-                                <li><a href="room_feature_view.php">View Room Features</a></li>
-                                <li><a href="room_add.php">Add Room</a></li>
-                                <li><a href="room_view.php">View Rooms</a></li>
-                            </ul>
-                        </li>
-                        <!-- <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Subscribers<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="subscriber_view.php">All Active Subscribers</a></li>
-                            </ul>
-                        </li> -->
+                        <?php if (!isset($_SESSION['customer'])) : ?>
+                        <li><a href="login.php">Login</a></li>
+                        <li><a href="registration.php">Sign Up</a></li>
                         <?php endif; ?>
 
-
-
-
-
-
-
-
-                        <?php if ($_SESSION['user']['role_id'] != 1 && $_SESSION['user']['role_id'] != 2) : ?>
-
-                        <?php if (in_array('index.php', $page_names)) : ?>
-                        <li><a href="index.php"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
+                        <?php if (isset($_SESSION['customer'])) : ?>
+                        <li><a href="c-dashboard.php">Dashboard</a></li>
                         <?php endif; ?>
 
-
-                        <?php if (in_array('slider_view.php', $page_names) || in_array('slider_view.php', $page_names)) : ?>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Sliders<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-
-                                <?php if (in_array('slider_add.php', $page_names)) : ?>
-                                <li><a href="slider_add.php">Add Slider</a></li>
-                                <?php endif; ?>
-
-                                <?php if (in_array('slider_view.php', $page_names)) : ?>
-                                <li><a href="slider_view.php">View Sliders</a></li>
-                                <?php endif; ?>
-                            </ul>
-                        </li>
-                        <?php endif; ?>
-
-
-
-
-
-                        <?php if (in_array('feature_add.php', $page_names) || in_array('feature_view.php', $page_names)) : ?>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Features<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-
-                                <?php if (in_array('feature_add.php', $page_names)) : ?>
-                                <li><a href="feature_add.php">Add Feature</a></li>
-                                <?php endif; ?>
-
-                                <?php if (in_array('feature_view.php', $page_names) || in_array('feature_edit.php', $page_names) || in_array('feature_delete.php', $page_names)) : ?>
-                                <li><a href="feature_view.php">View Features</a></li>
-                                <?php endif; ?>
-
-                            </ul>
-                        </li>
-                        <?php endif; ?>
-
-
-
-
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Testimonials<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="testimonial_add.php">Add Testimonial</a></li>
-                                <li><a href="testimonial_view.php">View Testimonials</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Service<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="service_add.php">Add Service</a></li>
-                                <li><a href="service_view.php">View Services</a></li>
-                            </ul>
-                        </li>
-                        <?php endif; ?>
-
-
-
-
-
-
-
-
-                        <!-- 
-                        </?php if ($_SESSION['user']['role_id'] == 1) : ?>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> Role Settings<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="role_add.php">Add Role</a></li>
-                                <li><a href="role_view.php">View Roles</a></li>
-                            </ul>
-                        </li>
-                        </?php endif; ?> -->
-
-
-
-                        <?php if ($_SESSION['user']['role_id'] == 1 || $_SESSION['user']['role_id'] == 2) : ?>
-                        <li>
-                            <a href="#"><i class="fa fa-files-o fa-fw"></i> User Settings<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li><a href="user_add.php">Add User</a></li>
-                                <li><a href="user_view.php">View Users</a></li>
-                            </ul>
-                        </li>
-                        <?php endif; ?>
-
+                        <li><a href="cart.php">View Cart</a></li>
                     </ul>
                 </div>
-                <!-- /.sidebar-collapse -->
             </div>
-            <!-- /.navbar-static-side -->
-        </nav>
-
-        <div id="page-wrapper">
+        </div>
+    </header>
